@@ -2,9 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copie les fichiers solution et projet
+# Copie les fichiers solution et tous les fichiers .csproj dans leurs dossiers respectifs
 COPY *.sln .
 COPY Catmash.Api/*.csproj ./Catmash.Api/
+COPY Catmash.Domain/*.csproj ./Catmash.Domain/
+COPY Catmash.Application/*.csproj ./Catmash.Application/
+COPY Catmash.Infrastructure/*.csproj ./Catmash.Infrastructure/
+COPY Catmash.Tests/*.csproj ./Catmash.Tests/
 
 # Restore les dépendances
 RUN dotnet restore
