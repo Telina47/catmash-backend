@@ -1,0 +1,85 @@
+# Fichiers de build et binaires
+bin/
+obj/
+out/
+
+# Répertoires de publication
+publish/
+app.publish/
+
+# Dossiers et fichiers générés par VS
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Fichiers de log
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.temp
+
+# Paquets NuGet téléchargés
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# Fichiers secrets ou sensibles
+secrets.json
+*.pfx
+*.key
+
+# Fichiers de base de données locales
+*.db
+*.mdf
+*.ldf
+*.sqlite
+*.bak
+
+# User-specific files
+*.userprefs
+
+# Configuration locale de IIS Express
+.vsconfig
+*.vspscc
+*.vssscc
+*.dbmdl
+
+# Fichiers de configuration générés
+launchSettings.json
+
+# Dotnet watch / hot reload
+**/Properties/launchSettings.json
+
+# Dossiers de test et couverture
+TestResults/
+coverage/
+
+# JetBrains Rider (si jamais tu l’utilises aussi)
+.idea/
+*.sln.iml
+
+# Dossiers de cache
+.ncrunch*
+_ReSharper*/
+*.DotSettings.user
+.cache/
+dist/
+
+# Fichiers temporaires de Git
+*.orig
+
+# Configuration de style/code analysis
+.editorconfig.user
+
+# Dossiers de configuration de Sonar
+.sonar/
+
+# Autres fichiers générés
+Generated_Code/
