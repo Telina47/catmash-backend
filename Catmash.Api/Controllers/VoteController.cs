@@ -1,4 +1,6 @@
-﻿using Catmash.Api.DTOs;
+﻿using AutoMapper;
+using Catmash.Api.DTOs;
+using Catmash.Application.DTOs;
 using Catmash.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -11,10 +13,14 @@ namespace Catmash.Api.Controllers
     public class VoteController : ControllerBase
     {
         private readonly IVoteService _voteService;
+        private readonly ICatRepository _catRepository;
+        private readonly IMapper _mapper;
 
-        public VoteController(IVoteService voteService)
+        public VoteController(IVoteService voteService,ICatRepository catRepository,IMapper mapper)
         {
             _voteService = voteService;
+            _catRepository = catRepository;
+            _mapper = mapper;
         }
 
         [Authorize]
@@ -26,6 +32,14 @@ namespace Catmash.Api.Controllers
 
             await _voteService.VoteForCatsAsync(vote.WinnerCatId, vote.LoserCatId, voterId);
             return Ok();
+        }
+
+        [HttpGet("random")]
+        public async Task<ActionResult<List<CatScoreDto>>> GetRandomPair()
+        {
+            var cats = await _catRepository.GetTwoRandomCatsAsync();
+            var result = _mapper.Map<List<CatScoreDto>>(cats);
+            return Ok(result);
         }
     }
 

@@ -12,17 +12,33 @@ using Catmash.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Catmash.Application.Interfaces;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Charger les fichiers de configuration en fonction de l’environnement
+var env = builder.Environment;
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+if (env.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+}
+else
+{
+    // Secrets montés dans Northflank
+    builder.Configuration.AddJsonFile("/secrets/appsettings.Production.json", optional: false, reloadOnChange: true);
+}
+
+builder.Configuration.AddEnvironmentVariables();
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() { Title = "Catmash API", Version = "v1" });
 
-    
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -49,13 +65,21 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// DbContext avec connection string configurée
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// Authentification JWT
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
 
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -65,9 +89,9 @@ builder.Services.AddAuthentication("Bearer")
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
 
         options.Events = new JwtBearerEvents
@@ -87,7 +111,6 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
-
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserStatsService, UserStatsService>();
 builder.Services.AddScoped<ICatRepository, CatRepository>();
@@ -96,8 +119,7 @@ builder.Services.AddScoped<IEloService, EloService>();
 builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddControllers();
 
-
-
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -115,7 +137,6 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 var app = builder.Build();
 await SeedData.InitializeAsync(app.Services);
 
-// Swagger uniquement en dev
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -124,15 +145,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseRouting(); 
-
-app.UseCors("AllowAll"); 
-
-app.UseAuthentication(); 
+app.UseRouting();
+app.UseCors("AllowAll");
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
-
-

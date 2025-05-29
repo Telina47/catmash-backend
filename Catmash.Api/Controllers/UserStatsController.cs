@@ -1,7 +1,8 @@
-﻿using Catmash.Application.DTOs;
+﻿using AutoMapper;
+using Catmash.Application.DTOs;
 using Catmash.Application.Interfaces;
+using Catmash.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -12,10 +13,13 @@ namespace Catmash.Api.Controllers
     public class UserStatsController : ControllerBase
     {
         private readonly IUserStatsService _userStatsService;
-
-        public UserStatsController(IUserStatsService userStatsService)
+        private readonly ICatRepository _catRepository;
+        private readonly IMapper _mapper;
+        public UserStatsController(IUserStatsService userStatsService, ICatRepository catRepository, IMapper mapper)
         {
             _userStatsService = userStatsService;
+            _catRepository = catRepository;
+            _mapper = mapper;
         }
 
 
@@ -27,6 +31,14 @@ namespace Catmash.Api.Controllers
             if (userId == null) return Unauthorized();
 
             var result = await _userStatsService.GetComparisonAsync(userId,(TopCount) top );
+            return Ok(result);
+        }
+
+        [HttpGet("top/{count:int}")]
+        public async Task<ActionResult<List<CatScoreDto>>> GetTopCats(int count = 10)
+        {
+            var cats = await _catRepository.GetTopCatsAsync(count);
+            var result = _mapper.Map<List<CatScoreDto>>(cats);
             return Ok(result);
         }
     }
