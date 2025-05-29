@@ -33,6 +33,10 @@ namespace Catmash.Api.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
+            if(!result.Succeeded)
+            {
+                return BadRequest(new { message = result.Errors.Select(e => e.Description) });
+            }
             try
             {
                 var token = GenerateJwtToken(user);
